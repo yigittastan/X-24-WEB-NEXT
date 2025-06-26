@@ -8,17 +8,6 @@ export default function Header() {
         <div className="flex items-center">
           <h1 className="text-2xl font-bold text-gray-900">X-24</h1>
         </div>
-
-        {/* Ortadaki sade buton (işlevsiz) */}
-        <div className="flex-1 flex justify-center">
-          <button
-            disabled
-            className="px-6 py-3 rounded-lg font-medium bg-gray-400 text-white cursor-not-allowed"
-          >
-            ▶️ İşe Başla
-          </button>
-        </div>
-
         {/* Sağ üst bölüm */}
         <div className="flex items-center space-x-4">
           {/* Davet Et Butonu */}
