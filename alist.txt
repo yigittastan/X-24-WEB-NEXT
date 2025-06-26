@@ -34,11 +34,17 @@ x24-web-next/
 │       │   │   └── page.tsx
 │       │   ├── messages/
 │       │   │   ├── components/
+│       │   │   │   ├── MessageList.tsx
+│       │   │   │   ├── Search.tsx
+│       │   │   │   └── SidebarUsers.tsx
 │       │   │   ├── hooks/
+│       │   │   ├── layout.tsx
 │       │   │   └── page.tsx
 │       │   ├── projects/
 │       │   │   ├── components/
 │       │   │   ├── hooks/
+│       │   │   └── page.tsx
+│       │   ├── settings/
 │       │   │   └── page.tsx
 │       │   ├── tasks/
 │       │   │   ├── components/
