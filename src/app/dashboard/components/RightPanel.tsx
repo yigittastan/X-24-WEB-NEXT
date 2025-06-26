@@ -22,7 +22,7 @@ export default function RightPanel() {
       }}
     >
       <TimeTracker />
-<hr className="w-8 border-gray-400" />
+      <hr className="w-8 border-gray-400" />
     </div>
   );
 }

@@ -1,8 +1,9 @@
+"use client";
+
 export default function TasksPage() {
   return (
-    <div>
-      <h1>Görevlerim</h1>
-      {/* Sayfa içeriği */}
-    </div>
+    <main className="min-h-screen flex items-center justify-center bg-gray-100 p-8">
+      <h1 className="text-4xl font-bold text-gray-900">Görevler Sayfasına Hoşgeldiniz</h1>
+    </main>
   );
 }

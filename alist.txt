@@ -3,6 +3,7 @@ x24-web-next/
 │   ├── file.svg
 │   ├── globe.svg
 │   ├── next.svg
+│   ├── settings.png
 │   ├── vercel.svg
 │   └── window.svg
 ├── src/
@@ -22,7 +23,15 @@ x24-web-next/
 │       │   │   ├── hooks/
 │       │   │   └── page.tsx
 │       │   ├── components/
-│       │   ├── hooks/
+│       │   │   ├── components/
+│       │   │   │   └── TimeTracker.tsx
+│       │   │   ├── Header.tsx
+│       │   │   ├── RightPanel.tsx
+│       │   │   └── Sidebar.tsx
+│       │   ├── disk/
+│       │   │   ├── components/
+│       │   │   ├── hooks/
+│       │   │   └── page.tsx
 │       │   ├── messages/
 │       │   │   ├── components/
 │       │   │   ├── hooks/
@@ -35,6 +44,7 @@ x24-web-next/
 │       │   │   ├── components/
 │       │   │   ├── hooks/
 │       │   │   └── page.tsx
+│       │   ├── layout.tsx
 │       │   └── page.tsx
 │       ├── utils/
 │       │   └── cookies.ts
