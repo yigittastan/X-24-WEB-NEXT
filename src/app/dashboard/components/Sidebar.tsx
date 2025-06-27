@@ -1,5 +1,15 @@
 "use client";
 import Image from "next/image";
+import {
+  Home,
+  MessageSquareText,
+  CheckSquare,
+  FolderKanban,
+  Calendar,
+  BarChart2,
+  HardDrive,
+  Settings,
+} from "lucide-react"; // Lucide ikonları
 
 export default function Sidebar() {
   return (
@@ -15,27 +25,65 @@ export default function Sidebar() {
         padding: "1rem",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between", // üst ve alt içerik arasında boşluk
+        justifyContent: "space-between",
         zIndex: 1000,
       }}
     >
       {/* Üst Menü */}
-      <div className="flex flex-col gap-4 text-black">
-        <a href="/dashboard" className="hover:text-indigo-600">Anasayfa</a>
-        <a href="/dashboard/messages" className="hover:text-indigo-600">Mesajlar</a>
-        <a href="/dashboard/tasks" className="hover:text-indigo-600">Görevler</a>
-        <a href="/dashboard/projects" className="hover:text-indigo-600">Projeler</a>
-        <a href="/dashboard/calender" className="hover:text-indigo-600">Takvim</a>
-        <a href="/dashboard/analysis" className="hover:text-indigo-600">Analiz</a>
-        <a href="/dashboard/disk" className="hover:text-indigo-600">Disk</a>
+      <div className="flex flex-col gap-4 text-black text-sm font-medium">
+        <a
+          href="/dashboard"
+          className="hover:text-indigo-600 flex items-center gap-2"
+        >
+          <Home size={18} /> Anasayfa
+        </a>
+        <a
+          href="/dashboard/messages"
+          className="hover:text-indigo-600 flex items-center gap-2"
+        >
+          <MessageSquareText size={18} /> Mesajlar
+        </a>
+        <a
+          href="/dashboard/tasks"
+          className="hover:text-indigo-600 flex items-center gap-2"
+        >
+          <CheckSquare size={18} /> Görevler
+        </a>
+        <a
+          href="/dashboard/projects"
+          className="hover:text-indigo-600 flex items-center gap-2"
+        >
+          <FolderKanban size={18} /> Projeler
+        </a>
+        <a
+          href="/dashboard/calender"
+          className="hover:text-indigo-600 flex items-center gap-2"
+        >
+          <Calendar size={18} /> Takvim
+        </a>
+        <a
+          href="/dashboard/analysis"
+          className="hover:text-indigo-600 flex items-center gap-2"
+        >
+          <BarChart2 size={18} /> Analiz
+        </a>
+        <a
+          href="/dashboard/disk"
+          className="hover:text-indigo-600 flex items-center gap-2"
+        >
+          <HardDrive size={18} /> Disk
+        </a>
       </div>
 
       {/* Alt Menü */}
       <div className="mt-auto pt-4">
-        <a href="/dashboard/settings" className="hover:text-indigo-600 flex justify-center">
-          <Image src="/settings.png" alt="Ayarlar" width={24} height={24} />
+        <a
+          href="/dashboard/settings"
+          className="text-black hover:text-indigo-600 flex items-center justify-center gap-2"
+        >
+          <Settings size={20} />
         </a>
       </div>
-    </aside> 
+    </aside>
   );
 }
