@@ -26,7 +26,7 @@ export default function Sidebar() {
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        zIndex: 1000,
+        zIndex: 10,
       }}
     >
       {/* Üst Menü */}

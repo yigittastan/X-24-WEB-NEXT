@@ -1,5 +1,6 @@
 x24-web-next/
 ├── public/
+│   ├── background.png
 │   ├── file.svg
 │   ├── globe.svg
 │   ├── next.svg
@@ -24,6 +25,7 @@ x24-web-next/
 │       │   │   └── page.tsx
 │       │   ├── components/
 │       │   │   ├── components/
+│       │   │   │   ├── ProfilModal.tsx
 │       │   │   │   └── TimeTracker.tsx
 │       │   │   ├── Header.tsx
 │       │   │   ├── RightPanel.tsx
@@ -40,6 +42,8 @@ x24-web-next/
 │       │   │   ├── hooks/
 │       │   │   ├── layout.tsx
 │       │   │   └── page.tsx
+│       │   ├── profile/
+│       │   │   └── page.tsx
 │       │   ├── projects/
 │       │   │   ├── components/
 │       │   │   ├── hooks/
@@ -48,10 +52,19 @@ x24-web-next/
 │       │   │   └── page.tsx
 │       │   ├── tasks/
 │       │   │   ├── components/
+│       │   │   │   ├── CreateTaskModal.tsx
+│       │   │   │   ├── FilterTabs.tsx
+│       │   │   │   ├── Header.tsx
+│       │   │   │   ├── SearchBar.tsx
+│       │   │   │   └── TaskCard.tsx
 │       │   │   ├── hooks/
+│       │   │   │   ├── useCreateTaskHelpers.tsx
+│       │   │   │   └── useTasks.ts
 │       │   │   └── page.tsx
 │       │   ├── layout.tsx
 │       │   └── page.tsx
+│       ├── lib/
+│       │   └── socket.ts
 │       ├── utils/
 │       │   └── cookies.ts
 │       ├── favicon.ico

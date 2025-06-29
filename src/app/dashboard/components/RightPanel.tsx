@@ -12,7 +12,7 @@ export default function RightPanel() {
         height: `calc(100vh - 73px)`, // Header yüksekliği kadar az yükseklik
         backgroundColor: "#f0f0f0",
         borderLeft: "1px solid #ccc",
-        zIndex: 1000,
+        zIndex: 10,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
