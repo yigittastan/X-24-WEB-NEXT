@@ -1,6 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Plus, X, Calendar, Clock, Trash2, Edit, Save } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  X,
+  Calendar,
+  Clock,
+  Trash2,
+  Edit,
+  Save,
+} from "lucide-react";
 
 interface TaskType {
   id: number;
@@ -29,6 +39,7 @@ interface TaskForm {
   time: string;
   typeId: number;
   completed: boolean;
+  priority: "low" | "medium" | "high";
 }
 
 export default function CalendarPage() {
@@ -45,11 +56,12 @@ export default function CalendarPage() {
     description: "",
     date: "",
     time: "",
-    typeId: 1
-    
+    typeId: 1,
+    completed: false,
+    priority: "medium",
   });
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   // Örnek görev türleri - API'den çekilecek
   const defaultTaskTypes: TaskType[] = [
@@ -61,21 +73,37 @@ export default function CalendarPage() {
   ];
 
   const months = [
-    "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
-    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+    "Ocak",
+    "Şubat",
+    "Mart",
+    "Nisan",
+    "Mayıs",
+    "Haziran",
+    "Temmuz",
+    "Ağustos",
+    "Eylül",
+    "Ekim",
+    "Kasım",
+    "Aralık",
   ];
 
   const daysOfWeek = [
-    "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar",
+    "Pazartesi",
+    "Salı",
+    "Çarşamba",
+    "Perşembe",
+    "Cuma",
+    "Cumartesi",
+    "Pazar",
   ];
 
   const getTypeColor = (typeId: number): string => {
-    const taskType = taskTypes.find(type => type.id === typeId);
+    const taskType = taskTypes.find((type) => type.id === typeId);
     return taskType ? taskType.color : "bg-gray-500";
   };
 
   const getTypeName = (typeId: number): string => {
-    const taskType = taskTypes.find(type => type.id === typeId);
+    const taskType = taskTypes.find((type) => type.id === typeId);
     return taskType ? taskType.name : "Bilinmeyen";
   };
 
@@ -83,11 +111,12 @@ export default function CalendarPage() {
   const fetchTaskTypes = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/task-types`);
-      if (!response.ok) throw new Error('Görev türleri yüklenirken hata oluştu');
+      if (!response.ok)
+        throw new Error("Görev türleri yüklenirken hata oluştu");
       const data = await response.json();
       setTaskTypes(data);
     } catch (err) {
-      console.error('Error fetching task types:', err);
+      console.error("Error fetching task types:", err);
       // Hata durumunda varsayılan türleri kullan
       setTaskTypes(defaultTaskTypes);
     }
@@ -98,12 +127,12 @@ export default function CalendarPage() {
     setError("");
     try {
       const response = await fetch(`${API_BASE_URL}/tasks`);
-      if (!response.ok) throw new Error('Görevler yüklenirken hata oluştu');
+      if (!response.ok) throw new Error("Görevler yüklenirken hata oluştu");
       const data = await response.json();
       setTasks(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
-      console.error('Error fetching tasks:', err);
+      setError(err instanceof Error ? err.message : "Bilinmeyen hata");
+      console.error("Error fetching tasks:", err);
     } finally {
       setLoading(false);
     }
@@ -112,26 +141,28 @@ export default function CalendarPage() {
   const createTask = async (taskData: TaskForm) => {
     setLoading(true);
     try {
-      const selectedType = taskTypes.find(type => type.id === taskData.typeId);
+      const selectedType = taskTypes.find(
+        (type) => type.id === taskData.typeId
+      );
       const response = await fetch(`${API_BASE_URL}/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...taskData,
           color: selectedType?.color || "bg-gray-500",
           typeName: selectedType?.name || "Bilinmeyen",
           completed: false,
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        })
+          updatedAt: new Date().toISOString(),
+        }),
       });
-      if (!response.ok) throw new Error('Görev oluşturulurken hata oluştu');
+      if (!response.ok) throw new Error("Görev oluşturulurken hata oluştu");
       const newTask = await response.json();
-      setTasks(prev => [...prev, newTask]);
+      setTasks((prev) => [...prev, newTask]);
       resetForm();
       setShowTaskModal(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
+      setError(err instanceof Error ? err.message : "Bilinmeyen hata");
     } finally {
       setLoading(false);
     }
@@ -140,51 +171,55 @@ export default function CalendarPage() {
   const updateTask = async (id: number, taskData: Partial<TaskForm>) => {
     setLoading(true);
     try {
-      const selectedType = taskTypes.find(type => type.id === taskData.typeId);
+      const selectedType = taskTypes.find(
+        (type) => type.id === taskData.typeId
+      );
       const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...taskData,
           color: selectedType?.color || "bg-gray-500",
           typeName: selectedType?.name || "Bilinmeyen",
-          updatedAt: new Date().toISOString()
-        })
+          updatedAt: new Date().toISOString(),
+        }),
       });
-      if (!response.ok) throw new Error('Görev güncellenirken hata oluştu');
+      if (!response.ok) throw new Error("Görev güncellenirken hata oluştu");
       const updatedTask = await response.json();
-      setTasks(prev => prev.map(task => task.id === id ? updatedTask : task));
+      setTasks((prev) =>
+        prev.map((task) => (task.id === id ? updatedTask : task))
+      );
       setEditingTask(null);
       setShowTaskModal(false);
       resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
+      setError(err instanceof Error ? err.message : "Bilinmeyen hata");
     } finally {
       setLoading(false);
     }
   };
 
   const deleteTask = async (id: number) => {
-    if (!confirm('Bu görevi silmek istediğinizden emin misiniz?')) return;
-    
+    if (!confirm("Bu görevi silmek istediğinizden emin misiniz?")) return;
+
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
-      if (!response.ok) throw new Error('Görev silinirken hata oluştu');
-      setTasks(prev => prev.filter(task => task.id !== id));
+      if (!response.ok) throw new Error("Görev silinirken hata oluştu");
+      setTasks((prev) => prev.filter((task) => task.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
+      setError(err instanceof Error ? err.message : "Bilinmeyen hata");
     } finally {
       setLoading(false);
     }
   };
 
   const toggleTaskCompletion = async (id: number) => {
-    const task = tasks.find(t => t.id === id);
+    const task = tasks.find((t) => t.id === id);
     if (!task) return;
-    
+
     await updateTask(id, { completed: !task.completed });
   };
 
@@ -201,7 +236,8 @@ export default function CalendarPage() {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const startingDayOfWeek =
+      firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
 
     const days: (number | null)[] = [];
     for (let i = 0; i < startingDayOfWeek; i++) {
@@ -214,7 +250,7 @@ export default function CalendarPage() {
   };
 
   const navigateMonth = (direction: number): void => {
-    setCurrentDate(prev => {
+    setCurrentDate((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(prev.getMonth() + direction);
       return newDate;
@@ -222,21 +258,25 @@ export default function CalendarPage() {
   };
 
   const getTasksForDate = (day: number): Task[] => {
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return tasks.filter(task => task.date === dateStr);
+    const dateStr = `${currentDate.getFullYear()}-${String(
+      currentDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return tasks.filter((task) => task.date === dateStr);
   };
 
   const getTodaysTasks = (): Task[] => {
     const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    return tasks.filter(task => task.date === todayStr);
+    const todayStr = `${today.getFullYear()}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    return tasks.filter((task) => task.date === todayStr);
   };
 
   const getUpcomingTasks = (): Task[] => {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = today.toISOString().split("T")[0];
     return tasks
-      .filter(task => task.date > todayStr && !task.completed)
+      .filter((task) => task.date > todayStr && !task.completed)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(0, 5);
   };
@@ -252,7 +292,7 @@ export default function CalendarPage() {
 
   const openTaskModal = (date?: string) => {
     if (date) {
-      setTaskForm(prev => ({ ...prev, date }));
+      setTaskForm((prev) => ({ ...prev, date }));
     }
     setShowTaskModal(true);
   };
@@ -264,7 +304,9 @@ export default function CalendarPage() {
       description: task.description || "",
       date: task.date,
       time: task.time,
-      typeId: task.typeId
+      typeId: task.typeId,
+      completed: task.completed,
+      priority: "medium",
     });
     setShowTaskModal(true);
   };
@@ -275,13 +317,20 @@ export default function CalendarPage() {
       description: "",
       date: "",
       time: "",
-      typeId: 1
+      typeId: 1,
+      completed: false,
+      priority: "medium",
     });
     setEditingTask(null);
   };
 
   const handleSubmit = () => {
-    if (!taskForm.title.trim() || !taskForm.date || !taskForm.time || !taskForm.typeId) {
+    if (
+      !taskForm.title.trim() ||
+      !taskForm.date ||
+      !taskForm.time ||
+      !taskForm.typeId
+    ) {
       setError("Lütfen tüm gerekli alanları doldurun");
       return;
     }
@@ -323,33 +372,46 @@ export default function CalendarPage() {
 
         {/* Quick Add Section */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Hızlı Görev Ekle</h2>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            Hızlı Görev Ekle
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <input
               type="text"
               placeholder="Görev başlığı..."
               value={taskForm.title}
-              onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
+              onChange={(e) =>
+                setTaskForm((prev) => ({ ...prev, title: e.target.value }))
+              }
               className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <input
               type="date"
               value={taskForm.date}
-              onChange={(e) => setTaskForm(prev => ({ ...prev, date: e.target.value }))}
+              onChange={(e) =>
+                setTaskForm((prev) => ({ ...prev, date: e.target.value }))
+              }
               className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <input
               type="time"
               value={taskForm.time}
-              onChange={(e) => setTaskForm(prev => ({ ...prev, time: e.target.value }))}
+              onChange={(e) =>
+                setTaskForm((prev) => ({ ...prev, time: e.target.value }))
+              }
               className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <select
               value={taskForm.typeId}
-              onChange={(e) => setTaskForm(prev => ({ ...prev, typeId: parseInt(e.target.value) }))}
+              onChange={(e) =>
+                setTaskForm((prev) => ({
+                  ...prev,
+                  typeId: parseInt(e.target.value),
+                }))
+              }
               className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              {taskTypes.map(type => (
+              {taskTypes.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.name}
                 </option>
@@ -357,7 +419,12 @@ export default function CalendarPage() {
             </select>
             <button
               onClick={handleSubmit}
-              disabled={loading || !taskForm.title.trim() || !taskForm.date || !taskForm.time}
+              disabled={
+                loading ||
+                !taskForm.title.trim() ||
+                !taskForm.date ||
+                !taskForm.time
+              }
               className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
@@ -419,14 +486,20 @@ export default function CalendarPage() {
                 {days.map((day, index) => {
                   const dayTasks = day ? getTasksForDate(day) : [];
                   const today = day ? isToday(day) : false;
-                  const dateStr = day ? `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` : "";
+                  const dateStr = day
+                    ? `${currentDate.getFullYear()}-${String(
+                        currentDate.getMonth() + 1
+                      ).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+                    : "";
 
                   return (
                     <div
                       key={index}
                       className={`
                         min-h-32 p-2 border-r border-b border-gray-200 last:border-r-0
-                        ${day ? "hover:bg-gray-50 cursor-pointer" : "bg-gray-50"}
+                        ${
+                          day ? "hover:bg-gray-50 cursor-pointer" : "bg-gray-50"
+                        }
                         ${today ? "bg-blue-50 border-blue-200" : ""}
                         ${selectedDate === day ? "bg-blue-100" : ""}
                       `}
@@ -453,7 +526,13 @@ export default function CalendarPage() {
                             {dayTasks.slice(0, 3).map((task) => (
                               <div
                                 key={task.id}
-                                className={`text-xs p-1 rounded text-white truncate cursor-pointer ${task.color} ${task.completed ? 'opacity-50 line-through' : ''}`}
+                                className={`text-xs p-1 rounded text-white truncate cursor-pointer ${
+                                  task.color
+                                } ${
+                                  task.completed
+                                    ? "opacity-50 line-through"
+                                    : ""
+                                }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   openEditModal(task);
@@ -499,7 +578,11 @@ export default function CalendarPage() {
                     />
                     <div className={`w-3 h-3 rounded-full ${task.color}`}></div>
                     <div className="flex-1">
-                      <div className={`font-medium text-gray-800 ${task.completed ? 'line-through opacity-60' : ''}`}>
+                      <div
+                        className={`font-medium text-gray-800 ${
+                          task.completed ? "line-through opacity-60" : ""
+                        }`}
+                      >
                         {task.title}
                       </div>
                       <div className="text-sm text-gray-600 flex items-center gap-2">
@@ -552,7 +635,7 @@ export default function CalendarPage() {
                       </div>
                       <div className="text-sm text-gray-600 flex items-center gap-2">
                         <Calendar className="w-3 h-3" />
-                        {new Date(task.date).toLocaleDateString('tr-TR')}
+                        {new Date(task.date).toLocaleDateString("tr-TR")}
                         <Clock className="w-3 h-3" />
                         {task.time}
                         <span className="text-xs bg-gray-200 px-2 py-1 rounded">
@@ -585,14 +668,13 @@ export default function CalendarPage() {
             </div>
           </div>
         </div>
-
         {/* Task Modal */}
         {showTaskModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">
-                  {editingTask ? 'Görevi Düzenle' : 'Yeni Görev'}
+                  {editingTask ? "Görevi Düzenle" : "Yeni Görev"}
                 </h3>
                 <button
                   onClick={() => {
@@ -613,7 +695,12 @@ export default function CalendarPage() {
                   <input
                     type="text"
                     value={taskForm.title}
-                    onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) =>
+                      setTaskForm((prev) => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
+                    }
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Görev başlığını girin"
                     required
@@ -626,7 +713,12 @@ export default function CalendarPage() {
                   </label>
                   <textarea
                     value={taskForm.description}
-                    onChange={(e) => setTaskForm(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setTaskForm((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Görev açıklaması (opsiyonel)"
                     rows={3}
@@ -641,7 +733,12 @@ export default function CalendarPage() {
                     <input
                       type="date"
                       value={taskForm.date}
-                      onChange={(e) => setTaskForm(prev => ({ ...prev, date: e.target.value }))}
+                      onChange={(e) =>
+                        setTaskForm((prev) => ({
+                          ...prev,
+                          date: e.target.value,
+                        }))
+                      }
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -654,7 +751,12 @@ export default function CalendarPage() {
                     <input
                       type="time"
                       value={taskForm.time}
-                      onChange={(e) => setTaskForm(prev => ({ ...prev, time: e.target.value }))}
+                      onChange={(e) =>
+                        setTaskForm((prev) => ({
+                          ...prev,
+                          time: e.target.value,
+                        }))
+                      }
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -667,11 +769,16 @@ export default function CalendarPage() {
                   </label>
                   <select
                     value={taskForm.typeId}
-                    onChange={(e) => setTaskForm(prev => ({ ...prev, typeId: parseInt(e.target.value) }))}
+                    onChange={(e) =>
+                      setTaskForm((prev) => ({
+                        ...prev,
+                        typeId: parseInt(e.target.value),
+                      }))
+                    }
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   >
-                    {taskTypes.map(type => (
+                    {taskTypes.map((type) => (
                       <option key={type.id} value={type.id}>
                         {type.name}
                       </option>
@@ -679,62 +786,62 @@ export default function CalendarPage() {
                   </select>
                   <div className="mt-2 flex items-center gap-2">
                     <span className="text-sm text-gray-600">Renk:</span>
-                    <div className={`w-4 h-4 rounded-full ${getTypeColor(taskForm.typeId)}`}></div>
-                    <span className="text-sm text-gray-600">{getTypeName(taskForm.typeId)}</span>
+                    <div
+                      className={`w-4 h-4 rounded-full ${getTypeColor(
+                        taskForm.typeId
+                      )}`}
+                    ></div>
+                    <span className="text-sm text-gray-600">
+                      {getTypeName(taskForm.typeId)}
+                    </span>
                   </div>
-                </div>
-                    </label>
-                    <select
-                      value={taskForm.color}
-                      onChange={(e) => setTaskForm(prev => ({ ...prev, color: e.target.value }))}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      {colorOptions.map(color => (
-                        <option key={color.value} value={color.value}>
-                          {color.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Öncelik
-                    </label>
-                    <select
-                      value={taskForm.priority}
-                      onChange={(e) => setTaskForm(prev => ({ ...prev, priority: e.target.value as 'low' | 'medium' | 'high' }))}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="low">Düşük</option>
-                      <option value="medium">Orta</option>
-                      <option value="high">Yüksek</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    <Save className="w-4 h-4" />
-                    {loading ? 'Kaydediliyor...' : (editingTask ? 'Güncelle' : 'Kaydet')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowTaskModal(false);
-                      resetForm();
-                    }}
-                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    İptal
-                  </button>
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Öncelik
+                </label>
+                <select
+                  value={taskForm.priority}
+                  onChange={(e) =>
+                    setTaskForm((prev) => ({
+                      ...prev,
+                      priority: e.target.value as "low" | "medium" | "high",
+                    }))
+                  }
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="low">Düşük</option>
+                  <option value="medium">Orta</option>
+                  <option value="high">Yüksek</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                {loading
+                  ? "Kaydediliyor..."
+                  : editingTask
+                  ? "Güncelle"
+                  : "Kaydet"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowTaskModal(false);
+                  resetForm();
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                İptal
+              </button>
             </div>
           </div>
         )}
