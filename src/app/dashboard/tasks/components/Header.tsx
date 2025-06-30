@@ -8,6 +8,7 @@ import CreateTaskModal from "./CreateTaskModal";
 interface HeaderProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
+   onCreateTask: () => Promise<void>;
 }
 
 export default function Header({ searchTerm, onSearchChange }: HeaderProps) {
