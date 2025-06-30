@@ -6,11 +6,38 @@ import { getCookie, setCookie } from "@/app/utils/cookies";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  companyName: string;
+  inviteCode: string;
+}
+
+interface FormErrors {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  companyName: string;
+  inviteCode: string;
+}
+
+interface RegisterRequestData {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  companyName?: string;
+  inviteCode?: string;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [registrationType, setRegistrationType] = useState<'new' | 'invite'>('new');
-  const [registerData, setRegisterData] = useState({
+  const [registrationType, setRegistrationType] = useState<"new" | "invite">("new");
+  const [registerData, setRegisterData] = useState<RegisterData>({
     name: "",
     email: "",
     password: "",
@@ -19,7 +46,7 @@ export default function RegisterPage() {
     inviteCode: "",
   });
 
-  const [formErrors, setFormErrors] = useState({
+  const [formErrors, setFormErrors] = useState<FormErrors>({
     name: "",
     email: "",
     phone: "",
@@ -41,18 +68,18 @@ export default function RegisterPage() {
     setFormErrors((prev) => ({ ...prev, [name]: "" })); // input değişince hatayı sıfırla
   }
 
-  function handleRegistrationTypeChange(type: 'new' | 'invite') {
+  function handleRegistrationTypeChange(type: "new" | "invite") {
     setRegistrationType(type);
     // Tip değişince ilgili alanları temizle
-    setRegisterData(prev => ({
+    setRegisterData((prev) => ({
       ...prev,
       companyName: "",
-      inviteCode: ""
+      inviteCode: "",
     }));
-    setFormErrors(prev => ({
+    setFormErrors((prev) => ({
       ...prev,
       companyName: "",
-      inviteCode: ""
+      inviteCode: "",
     }));
   }
 
@@ -60,7 +87,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
 
-    const errors = {
+    const errors: FormErrors = {
       name: "",
       email: "",
       phone: "",
@@ -89,11 +116,11 @@ export default function RegisterPage() {
     }
 
     // Tip bazlı validasyonlar
-    if (registrationType === 'new' && !registerData.companyName.trim()) {
+    if (registrationType === "new" && !registerData.companyName.trim()) {
       errors.companyName = "Şirket adı zorunludur.";
       hasError = true;
     }
-    if (registrationType === 'invite' && !registerData.inviteCode.trim()) {
+    if (registrationType === "invite" && !registerData.inviteCode.trim()) {
       errors.inviteCode = "Davet kodu zorunludur.";
       hasError = true;
     }
@@ -105,15 +132,14 @@ export default function RegisterPage() {
     }
 
     try {
-      // API'ye gönderilecek data'yı hazırla
-      const requestData: any = {
+      const requestData: RegisterRequestData = {
         name: registerData.name,
         email: registerData.email,
         phone: registerData.phone,
         password: registerData.password,
       };
 
-      if (registrationType === 'new') {
+      if (registrationType === "new") {
         requestData.companyName = registerData.companyName;
       } else {
         requestData.inviteCode = registerData.inviteCode;
@@ -128,14 +154,12 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (response.ok && data.access_token) {
-        // Backend'den gelen token ve user bilgilerini kaydet
-        setCookie("userToken", data.access_token, 7); // 7 gün geçerli
+        setCookie("userToken", data.access_token, 7);
         setCookie("userData", JSON.stringify(data.user), 7);
-        
+
         console.log("Kayıt başarılı:", data);
         router.push("/dashboard");
       } else {
-        // Hata mesajını göster
         const errorMessage = data.message || "Kayıt başarısız.";
         setFormErrors((prev) => ({
           ...prev,
@@ -154,7 +178,6 @@ export default function RegisterPage() {
   }
 
   function handleGoogleRegister() {
-    // Google OAuth yönlendirmesi
     window.location.href = `${baseUrl}/auth/google`;
   }
 
@@ -172,8 +195,8 @@ export default function RegisterPage() {
                 type="radio"
                 name="registrationType"
                 value="new"
-                checked={registrationType === 'new'}
-                onChange={() => handleRegistrationTypeChange('new')}
+                checked={registrationType === "new"}
+                onChange={() => handleRegistrationTypeChange("new")}
                 className="mr-2"
               />
               <span className="text-sm">Yeni Şirket</span>
@@ -183,8 +206,8 @@ export default function RegisterPage() {
                 type="radio"
                 name="registrationType"
                 value="invite"
-                checked={registrationType === 'invite'}
-                onChange={() => handleRegistrationTypeChange('invite')}
+                checked={registrationType === "invite"}
+                onChange={() => handleRegistrationTypeChange("invite")}
                 className="mr-2"
               />
               <span className="text-sm">Davet Kodu</span>
@@ -193,9 +216,7 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-4 text-left">
-          {formErrors.name && (
-            <p className="text-sm text-red-600">{formErrors.name}</p>
-          )}
+          {formErrors.name && <p className="text-sm text-red-600">{formErrors.name}</p>}
           <input
             type="text"
             name="name"
@@ -206,9 +227,7 @@ export default function RegisterPage() {
             className="border border-gray-300 rounded-md p-3 placeholder-black text-black"
           />
 
-          {formErrors.email && (
-            <p className="text-sm text-red-600">{formErrors.email}</p>
-          )}
+          {formErrors.email && <p className="text-sm text-red-600">{formErrors.email}</p>}
           <input
             type="email"
             name="email"
@@ -219,9 +238,7 @@ export default function RegisterPage() {
             className="border border-gray-300 rounded-md p-3 placeholder-black text-black"
           />
 
-          {formErrors.phone && (
-            <p className="text-sm text-red-600">{formErrors.phone}</p>
-          )}
+          {formErrors.phone && <p className="text-sm text-red-600">{formErrors.phone}</p>}
           <input
             type="tel"
             name="phone"
@@ -232,9 +249,7 @@ export default function RegisterPage() {
             className="border border-gray-300 rounded-md p-3 placeholder-black text-black"
           />
 
-          {formErrors.password && (
-            <p className="text-sm text-red-600">{formErrors.password}</p>
-          )}
+          {formErrors.password && <p className="text-sm text-red-600">{formErrors.password}</p>}
           <input
             type="password"
             name="password"
@@ -246,7 +261,7 @@ export default function RegisterPage() {
           />
 
           {/* Koşullu Alanlar */}
-          {registrationType === 'new' && (
+          {registrationType === "new" && (
             <>
               {formErrors.companyName && (
                 <p className="text-sm text-red-600">{formErrors.companyName}</p>
@@ -262,7 +277,7 @@ export default function RegisterPage() {
             </>
           )}
 
-          {registrationType === 'invite' && (
+          {registrationType === "invite" && (
             <>
               {formErrors.inviteCode && (
                 <p className="text-sm text-red-600">{formErrors.inviteCode}</p>

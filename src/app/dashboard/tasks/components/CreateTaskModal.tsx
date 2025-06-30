@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X, Search, ChevronDown } from "lucide-react";
 
 interface Option {
@@ -64,8 +64,26 @@ const SearchableMultiSelect = ({
     onChange(selectedValues.filter((v) => v !== value));
   };
 
+  // Dışarı tıklandığında dropdown'ı kapat
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.searchable-multiselect')) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   return (
-    <div className="relative">
+    <div className="relative searchable-multiselect">
       <div
         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none cursor-pointer bg-white flex items-center justify-between"
         onClick={() => setIsOpen(!isOpen)}
@@ -98,7 +116,10 @@ const SearchableMultiSelect = ({
             </span>
           )}
         </div>
-        <ChevronDown size={16} className="text-gray-400" />
+        <ChevronDown 
+          size={16} 
+          className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+        />
       </div>
 
       {isOpen && (
@@ -177,14 +198,8 @@ export default function CreateTaskModal({
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
 
-  // API'den verileri çek
-  useEffect(() => {
-    if (isOpen) {
-      fetchData();
-    }
-  }, [isOpen]);
-
-  const fetchData = async () => {
+  // useCallback kullanarak fetchData fonksiyonunu optimize et
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // Kullanıcıları çek
@@ -232,7 +247,14 @@ export default function CreateTaskModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE_URL]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchData();
+    }
+  }, [isOpen, fetchData]);
+
   const clearForm = () => {
     setFormData({
       title: "",
@@ -251,61 +273,88 @@ export default function CreateTaskModal({
     onClose();
   };
 
- const handleSubmit = async () => {
-  if (
-    !formData.title.trim() ||
-    !formData.description.trim() ||
-    formData.assignees.length === 0
-  ) {
-    alert("Lütfen görev başlığı, açıklaması ve en az bir atanan kişi giriniz.");
-    return;
-  }
-
-  setSubmitLoading(true);
-
-  try {
-    const formDataToSend = new FormData();
-
-    formDataToSend.append("title", formData.title);
-    formDataToSend.append("description", formData.description);
-    formDataToSend.append("startDate", formData.startDate);
-    formDataToSend.append("dueDate", formData.dueDate);
-    formDataToSend.append("assignees", JSON.stringify(formData.assignees));
-    formDataToSend.append(
-      "supervisors",
-      JSON.stringify(formData.supervisors)
-    );
-    formDataToSend.append("projects", JSON.stringify(formData.projects));
-
-    formData.files.forEach((file, index) => {
-      formDataToSend.append(`files[${index}]`, file);
-    });
-
-    const response = await fetch(`${API_BASE_URL}/tasks`, {
-      method: "POST",
-      body: formDataToSend,
-    });
-
-    if (response.ok) {
-      console.log("Görev başarıyla oluşturuldu");
-      clearForm();
-      onClose();
-    } else {
-      console.error("Görev oluşturulurken hata oluştu");
+  const validateForm = () => {
+    if (!formData.title.trim()) {
+      alert("Lütfen görev başlığını giriniz.");
+      return false;
     }
-  } catch (error) {
-    console.error("API isteği sırasında hata oluştu:", error);
-  } finally {
-    setSubmitLoading(false);
-  }
-};
+    if (!formData.description.trim()) {
+      alert("Lütfen görev açıklamasını giriniz.");
+      return false;
+    }
+    if (formData.assignees.length === 0) {
+      alert("Lütfen en az bir atanan kişi seçiniz.");
+      return false;
+    }
+    if (formData.startDate && formData.dueDate && formData.startDate > formData.dueDate) {
+      alert("Başlangıç tarihi, bitiş tarihinden önce olmalıdır.");
+      return false;
+    }
+    return true;
+  };
 
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setSubmitLoading(true);
+
+    try {
+      const formDataToSend = new FormData();
+
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("startDate", formData.startDate);
+      formDataToSend.append("dueDate", formData.dueDate);
+      formDataToSend.append("assignees", JSON.stringify(formData.assignees));
+      formDataToSend.append("supervisors", JSON.stringify(formData.supervisors));
+      formDataToSend.append("projects", JSON.stringify(formData.projects));
+
+      formData.files.forEach((file, index) => {
+        formDataToSend.append(`files[${index}]`, file);
+      });
+
+      const response = await fetch(`${API_BASE_URL}/tasks`, {
+        method: "POST",
+        body: formDataToSend,
+      });
+
+      if (response.ok) {
+        console.log("Görev başarıyla oluşturuldu");
+        clearForm();
+        onClose();
+        // Başarı mesajı göster
+        alert("Görev başarıyla oluşturuldu!");
+      } else {
+        const errorData = await response.json();
+        console.error("Görev oluşturulurken hata oluştu:", errorData);
+        alert("Görev oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
+      }
+    } catch (error) {
+      console.error("API isteği sırasında hata oluştu:", error);
+      alert("Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.");
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
+    
+    // Dosya boyutu kontrolü (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const validFiles = selectedFiles.filter(file => {
+      if (file.size > maxSize) {
+        alert(`${file.name} dosyası çok büyük. Maksimum dosya boyutu 10MB'dır.`);
+        return false;
+      }
+      return true;
+    });
+
     setFormData((prev) => ({
       ...prev,
-      files: [...prev.files, ...selectedFiles],
+      files: [...prev.files, ...validFiles],
     }));
   };
 
@@ -316,13 +365,38 @@ export default function CreateTaskModal({
     }));
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Modal ESC tuşu ile kapatma
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        handleCancel();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center text-black">
       <div
         className="fixed inset-0 bg-black/40"
-        onClick={onClose}
+        onClick={handleCancel}
         style={{
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
@@ -346,7 +420,7 @@ export default function CreateTaskModal({
             </button>
             <button
               onClick={handleSubmit}
-              disabled={submitLoading}
+              disabled={submitLoading || loading}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitLoading ? "Kaydediliyor..." : "Kaydet"}
@@ -354,12 +428,22 @@ export default function CreateTaskModal({
           </div>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-50">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Veriler yükleniyor...</p>
+            </div>
+          </div>
+        )}
+
         {/* Form Content */}
         <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
           {/* Görev Başlığı */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700 bg-gray-100 px-3 py-2 rounded">
-              Görev Başlığı
+              Görev Başlığı *
             </label>
             <input
               type="text"
@@ -369,13 +453,14 @@ export default function CreateTaskModal({
               }
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               placeholder="Görev başlığını giriniz"
+              maxLength={200}
             />
           </div>
 
           {/* Görev Açıklaması */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700 bg-gray-100 px-3 py-2 rounded">
-              Görev Açıklaması
+              Görev Açıklaması *
             </label>
             <textarea
               value={formData.description}
@@ -388,6 +473,7 @@ export default function CreateTaskModal({
               rows={4}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
               placeholder="Görev açıklamasını giriniz"
+              maxLength={1000}
             />
           </div>
 
@@ -435,7 +521,7 @@ export default function CreateTaskModal({
           {/* Atanan Kişiler */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700 bg-gray-100 px-3 py-2 rounded">
-              Atanan Kişiler
+              Atanan Kişiler *
             </label>
             <SearchableMultiSelect
               options={users}
@@ -497,6 +583,7 @@ export default function CreateTaskModal({
                 onChange={handleFileChange}
                 className="hidden"
                 id="file-upload"
+                accept="*/*"
               />
               <label
                 htmlFor="file-upload"
@@ -510,7 +597,7 @@ export default function CreateTaskModal({
                     Dosya yüklemek için tıklayın
                   </p>
                   <p className="text-xs text-gray-400">
-                    Tüm dosya türleri desteklenir
+                    Maksimum dosya boyutu: 10MB
                   </p>
                 </div>
               </label>
@@ -520,7 +607,7 @@ export default function CreateTaskModal({
             {formData.files.length > 0 && (
               <div className="space-y-2 mt-4">
                 <h4 className="text-sm font-medium text-gray-700">
-                  Yüklenen Dosyalar:
+                  Yüklenen Dosyalar ({formData.files.length}):
                 </h4>
                 <div className="space-y-2">
                   {formData.files.map((file, index) => (
@@ -537,13 +624,14 @@ export default function CreateTaskModal({
                             {file.name}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                            {formatFileSize(file.size)}
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => removeFile(index)}
-                        className="text-red-500 hover:text-red-700 p-1"
+                        className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
+                        title="Dosyayı kaldır"
                       >
                         <X size={16} />
                       </button>

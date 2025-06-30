@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-export default function profileModal({ onClose }: { onClose: () => void }) {
+export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
 
   const handleprofileClick = () => {
