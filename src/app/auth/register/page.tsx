@@ -9,11 +9,14 @@ const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function RegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [registrationType, setRegistrationType] = useState<'new' | 'invite'>('new');
   const [registerData, setRegisterData] = useState({
     name: "",
     email: "",
     password: "",
     phone: "",
+    companyName: "",
+    inviteCode: "",
   });
 
   const [formErrors, setFormErrors] = useState({
@@ -21,6 +24,8 @@ export default function RegisterPage() {
     email: "",
     phone: "",
     password: "",
+    companyName: "",
+    inviteCode: "",
   });
 
   useEffect(() => {
@@ -36,6 +41,21 @@ export default function RegisterPage() {
     setFormErrors((prev) => ({ ...prev, [name]: "" })); // input değişince hatayı sıfırla
   }
 
+  function handleRegistrationTypeChange(type: 'new' | 'invite') {
+    setRegistrationType(type);
+    // Tip değişince ilgili alanları temizle
+    setRegisterData(prev => ({
+      ...prev,
+      companyName: "",
+      inviteCode: ""
+    }));
+    setFormErrors(prev => ({
+      ...prev,
+      companyName: "",
+      inviteCode: ""
+    }));
+  }
+
   async function handleRegisterSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -45,9 +65,12 @@ export default function RegisterPage() {
       email: "",
       phone: "",
       password: "",
+      companyName: "",
+      inviteCode: "",
     };
     let hasError = false;
 
+    // Temel validasyonlar
     if (!registerData.name.trim()) {
       errors.name = "Ad soyad zorunludur.";
       hasError = true;
@@ -65,6 +88,16 @@ export default function RegisterPage() {
       hasError = true;
     }
 
+    // Tip bazlı validasyonlar
+    if (registrationType === 'new' && !registerData.companyName.trim()) {
+      errors.companyName = "Şirket adı zorunludur.";
+      hasError = true;
+    }
+    if (registrationType === 'invite' && !registerData.inviteCode.trim()) {
+      errors.inviteCode = "Davet kodu zorunludur.";
+      hasError = true;
+    }
+
     if (hasError) {
       setFormErrors(errors);
       setLoading(false);
@@ -72,21 +105,41 @@ export default function RegisterPage() {
     }
 
     try {
+      // API'ye gönderilecek data'yı hazırla
+      const requestData: any = {
+        name: registerData.name,
+        email: registerData.email,
+        phone: registerData.phone,
+        password: registerData.password,
+      };
+
+      if (registrationType === 'new') {
+        requestData.companyName = registerData.companyName;
+      } else {
+        requestData.inviteCode = registerData.inviteCode;
+      }
+
       const response = await fetch(`${baseUrl}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(registerData),
+        body: JSON.stringify(requestData),
       });
 
       const data = await response.json();
 
-      if (response.ok && data.token) {
-        setCookie("userToken", data.token, 1); // 1 gün geçerli
+      if (response.ok && data.access_token) {
+        // Backend'den gelen token ve user bilgilerini kaydet
+        setCookie("userToken", data.access_token, 7); // 7 gün geçerli
+        setCookie("userData", JSON.stringify(data.user), 7);
+        
+        console.log("Kayıt başarılı:", data);
         router.push("/dashboard");
       } else {
+        // Hata mesajını göster
+        const errorMessage = data.message || "Kayıt başarısız.";
         setFormErrors((prev) => ({
           ...prev,
-          email: data.message || "Kayıt başarısız.",
+          email: errorMessage,
         }));
       }
     } catch (err) {
@@ -101,13 +154,43 @@ export default function RegisterPage() {
   }
 
   function handleGoogleRegister() {
-    alert("Google kayıt akışı (henüz uygulanmadı)");
+    // Google OAuth yönlendirmesi
+    window.location.href = `${baseUrl}/auth/google`;
   }
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100 p-8">
       <div className="w-full max-w-md bg-white shadow-md rounded-2xl p-8 text-center">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-4">Kayıt Ol</h1>
+
+        {/* Kayıt Tipi Seçimi */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Kayıt Türü</h3>
+          <div className="flex gap-4">
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                name="registrationType"
+                value="new"
+                checked={registrationType === 'new'}
+                onChange={() => handleRegistrationTypeChange('new')}
+                className="mr-2"
+              />
+              <span className="text-sm">Yeni Şirket</span>
+            </label>
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                name="registrationType"
+                value="invite"
+                checked={registrationType === 'invite'}
+                onChange={() => handleRegistrationTypeChange('invite')}
+                className="mr-2"
+              />
+              <span className="text-sm">Davet Kodu</span>
+            </label>
+          </div>
+        </div>
 
         <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-4 text-left">
           {formErrors.name && (
@@ -162,10 +245,43 @@ export default function RegisterPage() {
             className="border border-gray-300 rounded-md p-3 placeholder-black text-black"
           />
 
+          {/* Koşullu Alanlar */}
+          {registrationType === 'new' && (
+            <>
+              {formErrors.companyName && (
+                <p className="text-sm text-red-600">{formErrors.companyName}</p>
+              )}
+              <input
+                type="text"
+                name="companyName"
+                placeholder="Şirket Adı"
+                value={registerData.companyName}
+                onChange={handleInputChange}
+                className="border border-gray-300 rounded-md p-3 placeholder-black text-black"
+              />
+            </>
+          )}
+
+          {registrationType === 'invite' && (
+            <>
+              {formErrors.inviteCode && (
+                <p className="text-sm text-red-600">{formErrors.inviteCode}</p>
+              )}
+              <input
+                type="text"
+                name="inviteCode"
+                placeholder="Davet Kodu"
+                value={registerData.inviteCode}
+                onChange={handleInputChange}
+                className="border border-gray-300 rounded-md p-3 placeholder-black text-black"
+              />
+            </>
+          )}
+
           <button
             type="submit"
             disabled={loading}
-            className="bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 transition"
+            className="bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 transition disabled:opacity-50"
           >
             {loading ? "Kayıt olunuyor..." : "Kayıt Ol"}
           </button>
