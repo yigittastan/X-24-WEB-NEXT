@@ -5,7 +5,6 @@ export default function TimeTracker() {
   const [isWorking, setIsWorking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [seconds, setSeconds] = useState(0);
-  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -31,7 +30,7 @@ export default function TimeTracker() {
   };
 
   const startWork = async () => {
-    // API isteği burada...
+    // API isteği burada yapılabilir...
     setIsWorking(true);
     setIsPaused(false);
     setSeconds(0);
@@ -49,21 +48,20 @@ export default function TimeTracker() {
     setIsWorking(false);
     setIsPaused(false);
     setSeconds(0);
-    setCurrentSessionId(null);
   };
 
   return (
     <div className="w-full flex flex-col items-center gap-2 p-1">
       {isWorking ? (
         <div className="flex flex-col items-center gap-2 w-full">
-          {/* Timer Display */}
+          {/* Zaman Gösterimi */}
           <div className="bg-white rounded-lg p-3 shadow-sm border w-full min-h-[120px] flex items-center justify-center">
             <div className="text-xs font-bold text-blue-600 font-mono leading-tight transform -rotate-90 whitespace-nowrap">
               {formatTime(seconds)}
             </div>
           </div>
 
-          {/* Control Buttons */}
+          {/* Kontrol Butonları */}
           <div className="flex flex-col gap-1 w-full">
             {!isPaused ? (
               <button

@@ -24,21 +24,6 @@ export default function MessageList({ selectedUser }: MessageListProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
-  // Kullanıcı seçilmemişse background göster
-  if (!selectedUser) {
-    return (
-      <div
-        className="h-full flex items-center justify-center"
-        style={{
-          backgroundImage: 'url("/background.png")',
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
-      ></div>
-    );
-  }
-
   useEffect(() => {
     if (selectedUser === "notlarim") {
       const saved = localStorage.getItem("personal_notes");
@@ -64,9 +49,27 @@ export default function MessageList({ selectedUser }: MessageListProps) {
     };
   }, [selectedUser]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  // Dosyayı base64 stringe çeviren yardımcı fonksiyon
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        if (typeof reader.result === "string") resolve(reader.result);
+        else reject("Dosya okunamadı");
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser || (!newMessage.trim() && !selectedFile)) return;
+
+    let base64File: string | null = null;
+    if (selectedFile) {
+      base64File = await fileToBase64(selectedFile);
+    }
 
     const message: Message = {
       id: Date.now(),
@@ -91,7 +94,7 @@ export default function MessageList({ selectedUser }: MessageListProps) {
           to: selectedUser,
           text: newMessage,
           fileName: selectedFile?.name,
-          fileData: selectedFile ? selectedFile.name : null, // gerçek upload entegresi burada gerekebilir
+          fileData: base64File,
         });
       }
 
@@ -121,11 +124,23 @@ export default function MessageList({ selectedUser }: MessageListProps) {
     }
   };
 
+  if (!selectedUser) {
+    return (
+      <div
+        className="h-full flex items-center justify-center"
+        style={{
+          backgroundImage: 'url("/background.png")',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      ></div>
+    );
+  }
+
   return (
     <div
-      className={`h-full flex flex-col relative ${
-        dragActive ? "bg-blue-50" : ""
-      }`}
+      className={`h-full flex flex-col relative ${dragActive ? "bg-blue-50" : ""}`}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
@@ -147,55 +162,35 @@ export default function MessageList({ selectedUser }: MessageListProps) {
               <h2 className="text-lg font-semibold text-gray-900">
                 {selectedUser === "notlarim" ? "Notlarım" : selectedUser}
               </h2>
-              {selectedUser !== "notlarim" && (
-                <p className="text-sm text-green-500">• Çevrimiçi</p>
-              )}
+              {selectedUser !== "notlarim" && <p className="text-sm text-green-500">• Çevrimiçi</p>}
             </div>
           </div>
 
-          {/* 🔔 Arama ve Diğer Butonlar - Sadece kullanıcı seçiliyse göster */}
+          {/* 🔔 Arama ve Diğer Butonlar */}
           {selectedUser && selectedUser !== "notlarim" && (
             <div className="flex items-center space-x-2">
-              <button
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                title="Ara"
-              >
+              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" title="Ara">
                 <SearchIcon size={20} className="text-gray-600" />
               </button>
-              <button
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                title="Sesli Arama"
-              >
+              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" title="Sesli Arama">
                 <Phone size={20} className="text-gray-600" />
               </button>
-              <button
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                title="Görüntülü Arama"
-              >
+              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" title="Görüntülü Arama">
                 <Video size={20} className="text-gray-600" />
               </button>
-              <button
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                title="Menü"
-              >
+              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" title="Menü">
                 <MoreVertical size={20} className="text-gray-600" />
               </button>
             </div>
           )}
 
-          {/* Notlarım için de arama butonu */}
+          {/* Notlarım için butonlar */}
           {selectedUser === "notlarim" && (
             <div className="flex items-center space-x-2">
-              <button
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                title="Notları Ara"
-              >
+              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" title="Notları Ara">
                 <SearchIcon size={20} className="text-gray-600" />
               </button>
-              <button
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                title="Menü"
-              >
+              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" title="Menü">
                 <MoreVertical size={20} className="text-gray-600" />
               </button>
             </div>
@@ -203,26 +198,22 @@ export default function MessageList({ selectedUser }: MessageListProps) {
         </div>
       </div>
 
-      {/* 🗨️ Mesaj Alanı - Header ve footer arasında scroll */}
+      {/* 🗨️ Mesaj Alanı */}
       <div
         className="flex-1 overflow-y-auto p-4 space-y-4"
         style={{
-          marginTop: "73px" /* Header yüksekliği kadar */,
-          marginBottom: "80px" /* Footer yüksekliği kadar */,
+          marginTop: "73px", // Header yüksekliği kadar
+          marginBottom: "80px", // Footer yüksekliği kadar
         }}
       >
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${
-              message.sender === "user" ? "justify-end" : "justify-start"
-            }`}
+            className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
               className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                message.sender === "user"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-900"
+                message.sender === "user" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
               }`}
             >
               <p className="text-sm whitespace-pre-wrap">{message.text}</p>
@@ -231,13 +222,13 @@ export default function MessageList({ selectedUser }: MessageListProps) {
                   href={message.fileUrl}
                   download={message.fileName}
                   className="text-sm underline block mt-2"
+                  target="_blank"
+                  rel="noreferrer"
                 >
                   📎 {message.fileName}
                 </a>
               )}
-              <p className="text-xs mt-1 text-right opacity-75">
-                {message.timestamp}
-              </p>
+              <p className="text-xs mt-1 text-right opacity-75">{message.timestamp}</p>
             </div>
           </div>
         ))}
@@ -245,11 +236,11 @@ export default function MessageList({ selectedUser }: MessageListProps) {
 
       {/* 📝 Sabit Mesaj Barı */}
       <div className="border-t border-gray-200 p-4 bg-white">
-        <form
-          onSubmit={handleSendMessage}
-          className="flex items-center space-x-3"
-        >
-          <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-lg text-sm transition-colors">
+        <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
+          <label
+            className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-lg text-sm transition-colors"
+            title="Dosya Ekle"
+          >
             📎
             <input type="file" onChange={handleFileChange} className="hidden" />
           </label>
@@ -257,11 +248,7 @@ export default function MessageList({ selectedUser }: MessageListProps) {
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={
-              selectedUser === "notlarim"
-                ? "Not ekleyin..."
-                : "Mesajınızı yazın..."
-            }
+            placeholder={selectedUser === "notlarim" ? "Not ekleyin..." : "Mesajınızı yazın..."}
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           />
           <button
