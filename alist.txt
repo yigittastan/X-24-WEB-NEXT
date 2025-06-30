@@ -22,6 +22,7 @@ x24-web-next/
 │       │   ├── calender/
 │       │   │   ├── components/
 │       │   │   ├── hooks/
+│       │   │   │   └── useTasks.ts
 │       │   │   └── page.tsx
 │       │   ├── components/
 │       │   │   ├── components/
@@ -59,7 +60,7 @@ x24-web-next/
 │       │   │   │   └── TaskCard.tsx
 │       │   │   ├── hooks/
 │       │   │   │   ├── useCreateTaskHelpers.tsx
-│       │   │   │   └── useTasks.ts
+│       │   │   │   └── useTasks.tsx
 │       │   │   └── page.tsx
 │       │   ├── layout.tsx
 │       │   └── page.tsx

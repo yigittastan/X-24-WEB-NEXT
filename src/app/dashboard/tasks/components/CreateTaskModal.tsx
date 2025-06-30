@@ -68,17 +68,17 @@ const SearchableMultiSelect = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
-      if (!target.closest('.searchable-multiselect')) {
+      if (!target.closest(".searchable-multiselect")) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
 
@@ -116,9 +116,11 @@ const SearchableMultiSelect = ({
             </span>
           )}
         </div>
-        <ChevronDown 
-          size={16} 
-          className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+        <ChevronDown
+          size={16}
+          className={`text-gray-400 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
         />
       </div>
 
@@ -268,10 +270,10 @@ export default function CreateTaskModal({
     });
   };
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     clearForm();
     onClose();
-  };
+  }, [onClose]);
 
   const validateForm = () => {
     if (!formData.title.trim()) {
@@ -286,7 +288,11 @@ export default function CreateTaskModal({
       alert("Lütfen en az bir atanan kişi seçiniz.");
       return false;
     }
-    if (formData.startDate && formData.dueDate && formData.startDate > formData.dueDate) {
+    if (
+      formData.startDate &&
+      formData.dueDate &&
+      formData.startDate > formData.dueDate
+    ) {
       alert("Başlangıç tarihi, bitiş tarihinden önce olmalıdır.");
       return false;
     }
@@ -308,7 +314,10 @@ export default function CreateTaskModal({
       formDataToSend.append("startDate", formData.startDate);
       formDataToSend.append("dueDate", formData.dueDate);
       formDataToSend.append("assignees", JSON.stringify(formData.assignees));
-      formDataToSend.append("supervisors", JSON.stringify(formData.supervisors));
+      formDataToSend.append(
+        "supervisors",
+        JSON.stringify(formData.supervisors)
+      );
       formDataToSend.append("projects", JSON.stringify(formData.projects));
 
       formData.files.forEach((file, index) => {
@@ -333,7 +342,9 @@ export default function CreateTaskModal({
       }
     } catch (error) {
       console.error("API isteği sırasında hata oluştu:", error);
-      alert("Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.");
+      alert(
+        "Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin."
+      );
     } finally {
       setSubmitLoading(false);
     }
@@ -341,12 +352,14 @@ export default function CreateTaskModal({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
-    
+
     // Dosya boyutu kontrolü (10MB limit)
     const maxSize = 10 * 1024 * 1024; // 10MB
-    const validFiles = selectedFiles.filter(file => {
+    const validFiles = selectedFiles.filter((file) => {
       if (file.size > maxSize) {
-        alert(`${file.name} dosyası çok büyük. Maksimum dosya boyutu 10MB'dır.`);
+        alert(
+          `${file.name} dosyası çok büyük. Maksimum dosya boyutu 10MB'dır.`
+        );
         return false;
       }
       return true;
@@ -366,31 +379,28 @@ export default function CreateTaskModal({
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  // Modal ESC tuşu ile kapatma
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
+      if (event.key === "Escape" && isOpen) {
         handleCancel();
       }
     };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
+      document.addEventListener("keydown", handleEscape);
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener("keydown", handleEscape);
     };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+  }, [isOpen, handleCancel]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center text-black">
